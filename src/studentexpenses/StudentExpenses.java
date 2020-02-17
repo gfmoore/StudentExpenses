@@ -6,6 +6,7 @@
 
  * Version history
  * v0.0.0       Initial version
+ * v0.0.1       17 February 2019 Created Objects version
 */
 
 package studentexpenses;
@@ -17,7 +18,7 @@ import java.util.Scanner;
 public class StudentExpenses {
 
   //global variables
-  static String[][] expenses = new String[20][3];
+  static Expense[] expenses = new Expense[20];
   static Scanner input = new Scanner(System.in);
 
   public static void main(String[] args) {
@@ -55,7 +56,7 @@ public class StudentExpenses {
       else if (option.equals("T")) {
         totalExpenses();
       }
-      else if (option.equals("Q")) {   //equivalent to option == "Q" 
+      else if (option.equals("Q")) { 
         doMenu = false;
       }
       else {
@@ -83,10 +84,7 @@ public class StudentExpenses {
         breakup = expense.split(",");
         
         //load into array expenses
-        expenses[i][0] = breakup[0].replace("\"","");  //the date
-        expenses[i][1] = breakup[1].replace("\"","");  //the item
-        expenses[i][2] = breakup[2].replace("\"","");  //the amount
-
+        expenses[i] = new Expense(breakup[0].replace("\"",""), breakup[1].replace("\"",""), Double.parseDouble(breakup[2].replace("\"","")));
         i++;
         if (i == 20) {
           System.out.println("Too many items in list!\nFix it!");
@@ -107,10 +105,10 @@ public class StudentExpenses {
       PrintWriter pw = new PrintWriter("expenses.csv");
       int i = 0;
       while (i < expenses.length) {
-        if (expenses[i][0] != null && !expenses[i][0].equals("")) {
-          pw.print("\"" + expenses[i][0] + "\",");
-          pw.print("\"" + expenses[i][1] + "\",");
-          pw.print("\"" + expenses[i][2] + "\"\n");
+        if (expenses[i] != null) {
+          pw.print("\"" + expenses[i].getDate() + "\",");
+          pw.print("\"" + expenses[i].getType() + "\",");
+          pw.print("\"" + expenses[i].getAmount() + "\"\n");
         }
         i++;
       }
@@ -146,8 +144,8 @@ public class StudentExpenses {
     System.out.println("   ---------- -------------------- ------");
     
     while (i < 20) {     
-      if ( expenses[i][0] != null ) {
-        System.out.printf("%2d %10s %-20s %5.2f %n", i+1, expenses[i][0], expenses[i][1], Double.parseDouble(expenses[i][2]));
+      if ( expenses[i] != null ) {
+        System.out.printf("%2d %10s %-20s %5.2f %n", i+1, expenses[i].getDate(), expenses[i].getType(), expenses[i].getAmount());
       }
       
       i++;
@@ -157,38 +155,35 @@ public class StudentExpenses {
   }
   
   public static void addExpense() {
-    System.out.println("Add an Expense");
-    System.out.println("--------------");
-    
-    String s;
+    String d, t, a;
     int i;
     
     //input the date or exit
     System.out.print("Please enter the date (yyyy-mm-dd) or press enter to quit : ");
-    s = input.nextLine();
-    if (s.equals("")) return;
+    d = input.nextLine();
+    if (d.equals("")) return;
+
     //find an empty slot in expenses
     i = 0;
     while (i < 20) {
-      if (expenses[i][0] == null) break;
+      if (expenses[i] == null) break;
       i++;
     }
     if (i >= 20) {
       System.out.println("No more space - fixit!");
+      return;
     }
-    expenses[i][0] = s;
+
     System.out.print("Please enter the 'type' of expense : ");
-    s = input.nextLine();
-    expenses[i][1] = s;
+    t = input.nextLine();
     System.out.printf("Please enter the amount : ");
-    s = input.nextLine();
-    expenses[i][2] = s;
+    a = input.nextLine();
+    expenses[i] = new Expense(d, t, Double.parseDouble(a));
+
     System.out.println("\nNew expense added! \n");
   }
   
   public static void deleteExpense() {
-//    System.out.println("Delete an Expense");
-//    System.out.println("-----------------");
     String s;
     int i, j, k;
     
@@ -198,11 +193,11 @@ public class StudentExpenses {
     s = input.nextLine();
     if (s.equals("")) return;
     
-    j = Integer.parseInt(s); //should check if s a number!
     //scan through list till get to the selected item
+    j = Integer.parseInt(s) - 1; //should check if s a number!
     i = 0;
     for (k = 0; k < 20; k++) {
-      if (expenses[k][0] != null) {
+      if (expenses[k] != null) {
         if (i == j) break;
         i++;
       }
@@ -213,28 +208,24 @@ public class StudentExpenses {
       System.out.println("No such record, retry.");
     }  
     else {
-      k = k-1; //adjust the index
-      System.out.printf("Is this the record? %s %s %s. %n", expenses[k][0], expenses[k][1], expenses[k][2]);
+      System.out.printf("Is this the record? %s %s %s. %n", expenses[k].getDate(), expenses[k].getType(), expenses[k].getAmount());
       System.out.print("Press Y to delete, otherwise enter to cancel : ");
       s = input.nextLine();
       if (s.toUpperCase().equals("Y")) {
+        expenses[k] = null;
+        
         //Compact the rest of the data
         while (k < 19) {
-          expenses[k][0] = expenses[k+1][0];
-          expenses[k][1] = expenses[k+1][1];
-          expenses[k][2] = expenses[k+1][2];
+          expenses[k] = expenses[k+1];
           k++;
         }
-        expenses[k][0] = null;
-        expenses[k][1] = null;
-        expenses[k][2] = null;
+        expenses[k] = null;
       }
       else {
         return;
       }     
-
     }
-  
+    System.out.println("\nExpense deleted!\n");
   }
   
   public static void editExpense() {
@@ -245,70 +236,66 @@ public class StudentExpenses {
     System.out.print("Which item would you like to edit? (or press enter to quit) : ");
     s = input.nextLine();
     if (s.equals("")) return;
-    
-        j = Integer.parseInt(s); //should check if s a number!
-    //scan through list till get to the selected item
+
+    //scan through list till get to the selected item    
+    j = Integer.parseInt(s) - 1; //should check if s a number!
     i = 0;
     for (k = 0; k < 20; k++) {
-      if (expenses[k][0] != null) {
+      if (expenses[k] != null) {
         if (i == j) break;
         i++;
       }
     }
     //k holds the actual record number
+
     //display contents of k
     if (k >= 20) {
       System.out.println("No such record, please retry.");
     }  
     else {
-      k = k-1; //adjust the index
-      System.out.printf("Is this the record? %s %s %s. %n", expenses[k][0], expenses[k][1], expenses[k][2]);
+      System.out.printf("Is this the record? %s %s %s. %n", expenses[k].getDate(), expenses[k].getType(), expenses[k].getAmount());
       System.out.print("Press Y to edit, otherwise 'enter' to cancel.");
       s = input.nextLine();
       if (s.toUpperCase().equals("Y")) {
         System.out.println("Please enter a new value or enter to leave as is.");
 
-        System.out.printf("Date %s : ", expenses[k][0]);
+        System.out.printf("Date %s : ", expenses[k].getDate());
         s = input.nextLine();
         if (!s.equals("")) {
-          expenses[k][0] = s;
+          expenses[k].setDate(s);
         }
         
-        System.out.printf("Type %s : ", expenses[k][1]);
+        System.out.printf("Type %s : ", expenses[k].getType());
         s = input.nextLine();
         if (!s.equals("")) {
-          expenses[k][1] = s;
+          expenses[k].setType(s);
         }
         
-        System.out.printf("Amount %s : ", expenses[k][2]);
+        System.out.printf("Amount %s : ", expenses[k].getAmount());
         s = input.nextLine();
         if (!s.equals("")) {
-          expenses[k][2] = s;
+          expenses[k].setAmount(Double.parseDouble(s));
         }
         
-        System.out.println("\nRecord updated! \n");
+        System.out.println("\nExpense updated! \n");
       }
       else {
         return;
       }     
 
     }
-
-    System.out.println("");
   }
   
   public static void totalExpenses() {
     double total = 0.0;
     for (int i = 0; i < expenses.length; i++) {
-      if (expenses[i][0] != null) {
-        total += Double.parseDouble(expenses[i][2]);
+      if (expenses[i] != null) {
+        total += expenses[i].getAmount();
       }
     }
     
-    System.out.printf("The total expenses are £%6.2f %n%n", total);
-    
-    System.out.println("");
-  }
+    System.out.printf("%nThe total expenses are £%6.2f %n%n", total);
 
+  }
 
 }
