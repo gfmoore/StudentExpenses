@@ -104,12 +104,20 @@ public class StudentExpenses {
   
   public static void exportExpenses() {
     try {
-      PrintWriter pw = new PrintWriter("test.csv");
-      pw.println("test!");
-      //TODO the proper output
+      PrintWriter pw = new PrintWriter("expenses.csv");
+      int i = 0;
+      while (i < expenses.length) {
+        if (expenses[i][0] != null && !expenses[i][0].equals("")) {
+          pw.print("\"" + expenses[i][0] + "\",");
+          pw.print("\"" + expenses[i][1] + "\",");
+          pw.print("\"" + expenses[i][2] + "\"\n");
+        }
+        i++;
+      }
       pw.close();
     }
     catch (Exception e) {
+      System.out.println(e);
       System.out.println("File write exception!");
     }
     System.out.println("Expenses.csv saved.");
