@@ -65,6 +65,7 @@ public class StudentExpenses {
     
     exportExpenses();
 
+    input.close();
     System.out.println("\n\nProgram finished...");
   }
 
@@ -92,11 +93,12 @@ public class StudentExpenses {
           break;
         }
       }
+      fileIn.close();
     }
     catch(Exception e) {
       System.out.println("Cannot find expenses.csv file!\n");
     }
-    
+
     System.out.println("Expenses.csv loaded.\n");
   }
   
@@ -104,7 +106,8 @@ public class StudentExpenses {
     try {
       PrintWriter pw = new PrintWriter("test.csv");
       pw.println("test!");
-      //TODO
+      //TODO the proper output
+      pw.close();
     }
     catch (Exception e) {
       System.out.println("File write exception!");
